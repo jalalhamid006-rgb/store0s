@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minimalist Apparel Showcase</title>
+  <style>
+    :root {
+      --bg-color: #e6e3dc;
+      --text-main: #1f1f1f;
+      --text-muted: #78756e;
+      --border-color: #cbc7be;
+      --panel-bg: #efede8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border-color);
+      z-index: 30;
+      background-color: var(--bg-color);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .toggle-chat-btn {
+      background-color: var(--text-main);
+      color: #fff;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s;
+    }
+
+    .toggle-chat-btn:hover {
+      transform: translateY(-2px) scale(1.05) rotate(-1.5deg);
+      background-color: #363636;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+    }
+
+    nav {
+      display: flex;
+      gap: 36px;
+    }
+
+    /* Nav button animation with scale, rotate, and translateY */
+    nav button {
+      background: none;
+      border: none;
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-bottom: 1.5px solid transparent;
+      display: inline-block;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease, border-color 0.25s ease;
+    }
+
+    nav button:hover {
+      color: var(--text-main);
+      transform: translateY(-4px) scale(1.12) rotate(-3deg);
+    }
+
+    nav button.active {
+      color: var(--text-main);
+      border-bottom-color: var(--text-main);
+      transform: translateY(-2px) scale(1.06);
+    }
+
+    /* Main Workspace Layout */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 310px 1fr 340px;
+      height: calc(100vh - 73px);
+      position: relative;
+      transition: grid-template-columns 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .workspace.chat-collapsed {
+      grid-template-columns: 0px 1fr 340px;
+    }
+
+    /* Left Side: Collapsible Message / Support Dashboard Tab */
+    .left-panel {
+      background-color: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 20;
+      overflow: hidden;
+      width: 310px;
+      opacity: 1;
+      transform: translateX(0);
+      transition:
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.35s ease,
+        padding 0.45s ease,
+        width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .workspace.chat-collapsed .left-panel {
+      width: 0;
+      padding-left: 0;
+      padding-right: 0;
+      opacity: 0;
+      transform: translateX(-100%);
+      border-right: none;
+      pointer-events: none;
+    }
+
+    .admin-hours {
+      background-color: #dedad0;
+      border-left: 3px solid var(--text-main);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      margin-bottom: 20px;
+    }
+
+    .admin-hours strong {
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 2px;
+    }
+
+    .panel-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .issue-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .issue-btn {
+      text-align: left;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 0.82rem;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: transform 0.25s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .issue-btn:hover {
+      border-color: var(--text-main);
+      transform: translateY(-2px) scale(1.02);
+    }
+
+    .issue-btn.selected {
+      background-color: var(--text-main);
+      color: #fff;
+      border-color: var(--text-main);
+    }
+
+    /* Rounded Text Box */
+    .message-box {
+      width: 100%;
+      height: 100px;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 0.82rem;
+      resize: none;
+      margin-bottom: 14px;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .message-box:focus {
+      outline: none;
+      border-color: var(--text-main);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Submit Button with border-radius and scale, rotate, translateY */
+    .send-btn {
+      width: 100%;
+      padding: 13px;
+      background-color: var(--text-main);
+      color: #fff;
+      border: none;
+      border-radius: 25px;
+      font-size: 0.78rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .send-btn:hover {
+      background-color: #333;
+      transform: translateY(-4px) scale(1.04) rotate(-1.5deg);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
+    }
+
+    .send-btn:active {
+      transform: translateY(0px) scale(0.97) rotate(1deg);
+    }
+
+    .status-msg {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: #2b5e3b;
+      min-height: 18px;
+    }
+
+    /* Center Stage: Diagonal Clothing Rack */
+    .rack-stage {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rack-rail {
+      position: absolute;
+      width: 120%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.05) 100%);
+      top: 22%;
+      left: -5%;
+      transform: rotate(16deg);
+      pointer-events: none;
+    }
+
+    .rack-items {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    @keyframes floatIn {
+      0% {
+        opacity: 0;
+        transform: translateY(25px) scale(0.92) rotate(-2deg);
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* Product Cards with Hover Animation & Transforms (scale, rotate, translateY) */
+    .garment-card {
+      position: absolute;
+      width: 265px;
+      left: var(--card-left);
+      top: var(--card-top);
+      z-index: var(--card-z);
+      filter: brightness(var(--card-bright));
+      transform: translateY(0px) scale(var(--card-scale)) rotate(0deg);
+      transition:
+        left 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        top 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        filter 0.35s ease;
+      cursor: pointer;
+      transform-origin: center center;
+      user-select: none;
+      animation: floatIn 0.5s ease backwards;
+    }
+
+    .garment-card:hover {
+      transform: translateY(-22px) scale(calc(var(--card-scale) * 1.07)) rotate(-3deg);
+      filter: brightness(1.03);
+      z-index: 50;
+    }
+
+    .garment-card img {
+      width: 100%;
+      height: 360px;
+      object-fit: contain;
+      display: block;
+      box-shadow: -12px 18px 28px rgba(0, 0, 0, 0.14);
+      background: #f5f4f0;
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 12px;
+      padding: 12px;
+      transition: box-shadow 0.4s ease;
+    }
+
+    .garment-card:hover img {
+      box-shadow: -16px 26px 38px rgba(0, 0, 0, 0.22);
+    }
+
+    .garment-tag {
+      margin-top: 8px;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .garment-card.active .garment-tag,
+    .garment-card:hover .garment-tag {
+      opacity: 1;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Right Side: Product Information Panel */
+    .right-panel {
+      padding: 40px 36px;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 15;
+      background-color: var(--bg-color);
+    }
+
+    .item-counter {
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .product-title {
+      font-size: 1.65rem;
+      font-weight: 400;
+      letter-spacing: 0.14em;
+      line-height: 1.25;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .product-desc {
+      font-size: 0.85rem;
+      line-height: 1.65;
+      color: #4a4843;
+      margin-bottom: 32px;
+    }
+
+    .specs-table {
+      width: 100%;
+      border-top: 1px solid var(--border-color);
+      margin-bottom: 32px;
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+    }
+
+    .spec-label {
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .spec-value {
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .rack-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+    }
+
+    .nav-arrow {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: transform 0.25s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .nav-arrow:hover {
+      background: var(--text-main);
+      color: #fff;
+      border-color: var(--text-main);
+      transform: scale(1.1);
+    }
+
+    @media (max-width: 1024px) {
+      body { overflow: auto; height: auto; }
+      .workspace,
+      .workspace.chat-collapsed {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .left-panel {
+        width: 100%;
+      }
+      .workspace.chat-collapsed .left-panel {
+        display: none;
+      }
+      .rack-stage { height: 480px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="header-left">
+      <button type="button" class="toggle-chat-btn" id="toggle-chat-btn" title="Toggle Support Panel">
+        <span id="chat-toggle-icon">&#9776;</span>
+        <span id="chat-toggle-text">Support Chat</span>
+      </button>
+      <div class="logo">ATELIER</div>
+    </div>
+
+    <nav id="category-nav">
+      <button class="active" data-category="jacket">Jacket</button>
+      <button data-category="shirt">Shirt</button>
+      <button data-category="tshirt">T-Shirt</button>
+    </nav>
+
+    <div style="font-size: 0.75rem; letter-spacing: 0.15em; color: var(--text-muted);">COLLECTION 01</div>
+  </header>
+
+  <main class="workspace" id="workspace">
+    <!-- Left Side: Collapsible Message / Problem Tab -->
+    <aside class="left-panel" id="left-panel">
+      <div>
+        <div class="admin-hours">
+          <strong>Admin Support Hours</strong>
+          The admin checks messages daily from <b>2:00 PM until 3:00 PM</b>.
+        </div>
+
+        <span class="panel-label">Report a Product Issue</span>
+        <div class="issue-buttons" id="issue-buttons">
+          <button type="button" class="issue-btn" data-issue="The size doesn't fit">1. The size doesn't fit</button>
+          <button type="button" class="issue-btn" data-issue="The order sent in wrong">2. The order sent in wrong</button>
+          <button type="button" class="issue-btn" data-issue="Item left behind">3. The left</button>
+        </div>
+
+        <span class="panel-label">Additional Details</span>
+        <textarea id="user-message" class="message-box" placeholder="Write your order number or details for the admin..."></textarea>
+        <button type="button" class="send-btn" id="send-admin-btn">Send to Admin</button>
+        <div class="status-msg" id="status-msg"></div>
+      </div>
+
+      <div style="font-size: 0.72rem; color: var(--text-muted);">
+        Selected item is attached automatically to your message.
+      </div>
+    </aside>
+
+    <!-- Center: Diagonal Rack Display -->
+    <section class="rack-stage">
+      <div class="rack-rail"></div>
+      <div class="rack-items" id="rack-items"></div>
+    </section>
+
+    <!-- Right Side: Selected Product Details -->
+    <aside class="right-panel">
+      <div class="item-counter" id="item-counter">01 / 04</div>
+      <h1 class="product-title" id="product-title">Corduroy Collar Harrington</h1>
+      <p class="product-desc" id="product-desc"></p>
+
+      <div class="specs-table">
+        <div class="spec-row">
+          <span class="spec-label">Material</span>
+          <span class="spec-value" id="spec-material"></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Color</span>
+          <span class="spec-value" id="spec-color"></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Size</span>
+          <span class="spec-value" id="spec-size"></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Price</span>
+          <span class="spec-value" id="spec-price"></span>
+        </div>
+      </div>
+
+      <div class="rack-controls">
+        <button class="nav-arrow" id="prev-btn" title="Previous item">&#8592;</button>
+        <span style="font-size: 0.75rem; letter-spacing: 0.15em; color: var(--text-muted);">CLICK GARMENT TO INSPECT</span>
+        <button class="nav-arrow" id="next-btn" title="Next item">&#8594;</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const products = {
+      jacket: [
+        {
+          title: "Corduroy Collar Harrington",
+          desc: "Classic zip-front windbreaker jacket featuring a contrasting dark brown corduroy collar, buttoned side pockets, and plaid interior lining.",
+          material: "Cotton Twill 100%",
+          color: "Khaki Tan / Brown",
+          size: "S / M / L / XL",
+          price: "$185",
+          image: "jacket.webp"
+        },
+        {
+          title: "Ribbed Collar Knit Cardigan",
+          desc: "Button-front heavyweight knit jacket with a mock-rib stand collar, dual front patch pockets, and ribbed cuffs.",
+          material: "Wool 70% / Cotton 30%",
+          color: "Oatmeal Melange",
+          size: "M / L / XL",
+          price: "$160",
+          image: "jacket1.webp"
+        },
+        {
+          title: "Collared Zip Knit Jacket",
+          desc: "Clean full-zip knitted blouson with a fold-over polo collar and welt side pockets for effortless layering.",
+          material: "Fine Merino Blend",
+          color: "Warm Taupe",
+          size: "S / M / L",
+          price: "$170",
+          image: "jacket2.webp"
+        },
+        {
+          title: "Geometric Check Knit Blouson",
+          desc: "Stand-collar zip-up knit jacket accented with asymmetrical dark brown geometric grid stripes.",
+          material: "Cotton 60% / Acrylic 40%",
+          color: "Sand Beige / Espresso",
+          size: "M / L / XL",
+          price: "$175",
+          image: "jacketb.webp"
+        }
+      ],
+      shirt: [
+        {
+          title: "Band Collar Striped Henley",
+          desc: "Breathable short-sleeve pullover shirt with a mandarin band collar, two-button placket, and rolled cuffs.",
+          material: "Linen 55% / Cotton 45%",
+          color: "Sky Blue / White Stripe",
+          size: "S / M / L / XL",
+          price: "$85",
+          image: "shirt.webp"
+        },
+        {
+          title: "Pinstripe Camp Collar Shirt",
+          desc: "Relaxed resort-collar button-up featuring subtle vertical charcoal stripes and a single chest pocket.",
+          material: "Cotton Poplin 100%",
+          color: "Ivory Cream / Charcoal",
+          size: "S / M / L",
+          price: "$90",
+          image: "shirt1.webp"
+        },
+        {
+          title: "Bold Stripe Resort Shirt",
+          desc: "Open camp-collar short-sleeve shirt in wide vertical camel and off-white stripes with a chest pocket.",
+          material: "Viscose 65% / Linen 35%",
+          color: "Camel Tan / Off-White",
+          size: "S / M / L / XL",
+          price: "$95",
+          image: "shirt2.webp"
+        }
+      ],
+      tshirt: [
+        {
+          title: "Open-Knit Tipped Polo",
+          desc: "Textured crochet-knit short-sleeve polo featuring a three-button placket and contrast dark brown and cream striped trim.",
+          material: "Combed Cotton Knit 100%",
+          color: "Beige / Dark Brown",
+          size: "S / M / L",
+          price: "$80",
+          image: "tshirt 3.jpg"
+        },
+        {
+          title: "Minimalist Fine-Knit Polo",
+          desc: "Clean, smooth-gauge short-sleeve knit polo shirt with a classic collar and three-button closure.",
+          material: "Mercerized Cotton 100%",
+          color: "Warm Ecru",
+          size: "S / M / L / XL",
+          price: "$75",
+          image: "t-shirt.webp"
+        },
+        {
+          title: "Graphic Print Crewneck Tee",
+          desc: "Soft everyday crewneck t-shirt featuring a vintage western cowboy and classic car front graphic.",
+          material: "Cotton Jersey 100%",
+          color: "Heather Light Grey",
+          size: "S / M / L / XL",
+          price: "$45",
+          image: "t-shirt1.webp"
+        }
+      ]
+    };
+
+    let currentCategory = 'jacket';
+    let activeIndex = 0;
+    let selectedIssue = '';
+
+    const rackContainer = document.getElementById('rack-items');
+    const workspace = document.getElementById('workspace');
+    const toggleChatBtn = document.getElementById('toggle-chat-btn');
+    const chatToggleText = document.getElementById('chat-toggle-text');
+
+    // Toggle Left Dashboard Chat Panel
+    toggleChatBtn.addEventListener('click', () => {
+      const isCollapsed = workspace.classList.toggle('chat-collapsed');
+      chatToggleText.textContent = isCollapsed ? 'Open Support' : 'Hide Support';
+    });
+
+    function renderRack() {
+      const items = products[currentCategory];
+      rackContainer.innerHTML = '';
+
+      items.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'garment-card' + (index === activeIndex ? ' active' : '');
+
+        const offset = (index - activeIndex + items.length) % items.length;
+        const leftPos = 60 + offset * 95;
+        const topPos = 65 + offset * 28;
+        const scale = Math.max(0.76, 1 - offset * 0.06);
+        const zIndex = items.length - offset;
+        const brightness = offset === 0 ? 1 : Math.max(0.82, 1 - offset * 0.05);
+
+        // Store base values as CSS variables so :hover transform can smoothly combine with them
+        card.style.setProperty('--card-left', `${leftPos}px`);
+        card.style.setProperty('--card-top', `${topPos}px`);
+        card.style.setProperty('--card-scale', scale);
+        card.style.setProperty('--card-z', zIndex);
+        card.style.setProperty('--card-bright', brightness);
+        card.style.animationDelay = `${index * 0.07}s`;
+
+        card.innerHTML = `
+          <img src="${item.image}" alt="${item.title}" />
+          <div class="garment-tag">0${index + 1} — ${item.title}</div>
+        `;
+
+        card.addEventListener('click', () => {
+          activeIndex = index;
+          renderRack();
+          updateInfoPanel();
+        });
+
+        rackContainer.appendChild(card);
+      });
+    }
+
+    function updateInfoPanel() {
+      const items = products[currentCategory];
+      const item = items[activeIndex];
+
+      document.getElementById('item-counter').textContent =
+        `0${activeIndex + 1} / 0${items.length}`;
+      document.getElementById('product-title').textContent = item.title;
+      document.getElementById('product-desc').textContent = item.desc;
+      document.getElementById('spec-material').textContent = item.material;
+      document.getElementById('spec-color').textContent = item.color;
+      document.getElementById('spec-size').textContent = item.size;
+      document.getElementById('spec-price').textContent = item.price;
+    }
+
+    // Category Navigation
+    document.querySelectorAll('#category-nav button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#category-nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCategory = btn.dataset.category;
+        activeIndex = 0;
+        renderRack();
+        updateInfoPanel();
+      });
+    });
+
+    // Previous / Next Controls
+    document.getElementById('prev-btn').addEventListener('click', () => {
+      const len = products[currentCategory].length;
+      activeIndex = (activeIndex - 1 + len) % len;
+      renderRack();
+      updateInfoPanel();
+    });
+
+    document.getElementById('next-btn').addEventListener('click', () => {
+      const len = products[currentCategory].length;
+      activeIndex = (activeIndex + 1) % len;
+      renderRack();
+      updateInfoPanel();
+    });
+
+    // Left Panel Issue Selection
+    document.querySelectorAll('.issue-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.issue-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedIssue = btn.dataset.issue;
+      });
+    });
+
+    // Send to Admin Action
+    document.getElementById('send-admin-btn').addEventListener('click', () => {
+      const statusEl = document.getElementById('status-msg');
+      const currentProduct = products[currentCategory][activeIndex].title;
+
+      if (!selectedIssue) {
+        statusEl.style.color = '#a33b3b';
+        statusEl.textContent = 'Please select one of the 3 problem buttons first.';
+        return;
+      }
+
+      statusEl.style.color = '#2b5e3b';
+      statusEl.textContent = `Sent "${selectedIssue}" for ${currentProduct}. Admin reviews between 2:00 PM – 3:00 PM.`;
+      document.getElementById('user-message').value = '';
+    });
+
+    // Initialize
+    renderRack();
+    updateInfoPanel();
+  </script>
+</body>
+</html>
